@@ -1,0 +1,5 @@
+BAD = {
+
+    "FAIL": True,
+
+}

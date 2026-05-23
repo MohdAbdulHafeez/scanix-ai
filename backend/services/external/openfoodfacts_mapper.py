@@ -1,5 +1,9 @@
 from modules.ingredients.verifier import verify
 
+from modules.ingredients.claims_engine import (
+    evaluate,
+)
+
 from modules.scoring.scanix_score import (
     compute,
 )
@@ -35,6 +39,20 @@ def normalize_product(
         or ""
     )
 
+    ingredients = (
+        product.get(
+            "ingredients"
+        )
+        or []
+    )
+
+    claims = (
+        evaluate(
+            ingredients,
+            ingredients_text,
+        )
+    )
+
     score = compute(
         product.get(
             "nutriscore_grade"
@@ -43,6 +61,23 @@ def normalize_product(
             "nova_group"
         ),
     )
+
+    tags = [
+        *(
+            product.get(
+                "_keywords"
+            )
+            or []
+        ),
+
+        f"scanix:{score['scanix_score']}",
+
+        f"risk:{score['risk_level']}",
+
+        f"good:{len(claims['positives'])}",
+
+        f"bad:{len(claims['negatives'])}",
+    ]
 
     return ProductSchema(
 
@@ -93,6 +128,7 @@ def normalize_product(
                 "risk": x["risk"],
                 "explanation": x["explanation"],
             }
+
             for x in verify(
                 ingredients_text
             )
@@ -129,18 +165,7 @@ def normalize_product(
             )
         ),
 
-        tags=[
-            *(
-                product.get(
-                    "_keywords"
-                )
-                or []
-            ),
-
-            f"scanix:{score['scanix_score']}",
-
-            f"risk:{score['risk_level']}",
-        ],
+        tags=tags,
 
         nutrition=NutritionSchema(
 
@@ -191,6 +216,5 @@ def normalize_product(
                     "sodium_100g"
                 )
             ),
-
         ),
     )

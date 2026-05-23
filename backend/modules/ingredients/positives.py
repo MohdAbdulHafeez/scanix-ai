@@ -1,0 +1,5 @@
+GOOD = {
+
+    "PASS": True,
+
+}
