@@ -1,3 +1,5 @@
+from modules.ingredients.verifier import verify
+
 from schemas.product import (
     ProductSchema,
     NutritionSchema,
@@ -20,6 +22,13 @@ def normalize_product(
             "nutriments"
         )
         or {}
+    )
+
+    ingredients_text = (
+        product.get(
+            "ingredients_text"
+        )
+        or ""
     )
 
     return ProductSchema(
@@ -62,10 +71,19 @@ def normalize_product(
         ),
 
         ingredients_text=(
-            product.get(
-                "ingredients_text"
-            )
+            ingredients_text
         ),
+
+        ingredients=[
+            {
+                "name": x["name"],
+                "risk": x["risk"],
+                "explanation": x["explanation"],
+            }
+            for x in verify(
+                ingredients_text
+            )
+        ],
 
         allergens=(
             product.get(
@@ -154,6 +172,5 @@ def normalize_product(
                     "sodium_100g"
                 )
             ),
-
         ),
     )
