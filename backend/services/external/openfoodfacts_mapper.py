@@ -1,5 +1,9 @@
 from modules.ingredients.verifier import verify
 
+from modules.scoring.scanix_score import (
+    compute,
+)
+
 from schemas.product import (
     ProductSchema,
     NutritionSchema,
@@ -29,6 +33,15 @@ def normalize_product(
             "ingredients_text"
         )
         or ""
+    )
+
+    score = compute(
+        product.get(
+            "nutriscore_grade"
+        ),
+        product.get(
+            "nova_group"
+        ),
     )
 
     return ProductSchema(
@@ -116,12 +129,18 @@ def normalize_product(
             )
         ),
 
-        tags=(
-            product.get(
-                "_keywords"
-            )
-            or []
-        ),
+        tags=[
+            *(
+                product.get(
+                    "_keywords"
+                )
+                or []
+            ),
+
+            f"scanix:{score['scanix_score']}",
+
+            f"risk:{score['risk_level']}",
+        ],
 
         nutrition=NutritionSchema(
 
@@ -172,5 +191,6 @@ def normalize_product(
                     "sodium_100g"
                 )
             ),
+
         ),
     )
