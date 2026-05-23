@@ -13,6 +13,9 @@ from fastapi.responses import ORJSONResponse
 from app.router import router
 from core.logging import app_logger
 from core.settings import settings
+from middleware.request_id import RequestIDMiddleware
+from middleware.timing import TimingMiddleware
+from middleware.exception import global_exception
 
 
 STARTED_AT = time.time()
@@ -56,6 +59,19 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+app.add_middleware(
+    RequestIDMiddleware
+)
+
+app.add_middleware(
+    TimingMiddleware
+)
+
+app.add_exception_handler(
+    Exception,
+    global_exception,
 )
 
 
