@@ -28,9 +28,49 @@ async def nutritionist(
     body: dict,
 ):
 
-    barcode = (
-        body["barcode"]
+    question = body.get(
+        "question",
+        ""
     )
+
+    barcode = body.get(
+        "barcode"
+    )
+
+    # -----------------
+    # NORMAL CHAT MODE
+    # -----------------
+
+    if not barcode:
+
+        explanation = await (
+            explain_ai(
+                question,
+                "",
+                "unknown",
+            )
+        )
+
+        voice = (
+            generate_voice(
+                explanation
+            )
+        )
+
+        return {
+
+            "success": True,
+
+            "question": question,
+
+            "answer": explanation,
+
+            "voice": voice,
+        }
+
+    # -----------------
+    # PRODUCT MODE
+    # -----------------
 
     raw = await (
         openfoodfacts.lookup(
@@ -41,7 +81,9 @@ async def nutritionist(
     if not raw["found"]:
 
         return {
+
             "success": False,
+
             "message": "Product not found",
         }
 
@@ -75,9 +117,7 @@ async def nutritionist(
             product.model_dump()
         ),
 
-        "explanation": (
-            explanation
-        ),
+        "answer": explanation,
 
         "voice": voice,
     }

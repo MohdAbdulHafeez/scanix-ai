@@ -4,11 +4,13 @@ Production FastAPI Application
 """
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 import time
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.router import router
 from core.logging import app_logger
@@ -21,8 +23,22 @@ from middleware.exception import global_exception
 STARTED_AT = time.time()
 
 
+# ==========================================================
+# CREATE GENERATED FOLDER
+# ==========================================================
+
+Path(
+    "generated/voice"
+).mkdir(
+    parents=True,
+    exist_ok=True,
+)
+
+
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(
+    app: FastAPI,
+):
 
     app_logger.info(
         f"Starting {settings.APP_NAME}"
@@ -36,13 +52,40 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
+
     title=settings.APP_NAME,
+
     version=settings.APP_VERSION,
+
     description="AI Food Intelligence Platform",
+
     lifespan=lifespan,
+
     docs_url="/docs",
+
     redoc_url="/redoc",
+
     default_response_class=ORJSONResponse,
+
+)
+
+
+# ==========================================================
+# STATIC AUDIO SERVING
+# ==========================================================
+
+app.mount(
+
+    "/generated",
+
+    StaticFiles(
+
+        directory="generated"
+
+    ),
+
+    name="generated",
+
 )
 
 
@@ -51,15 +94,25 @@ app = FastAPI(
 # ==========================================================
 
 app.add_middleware(
+
     CORSMiddleware,
+
     allow_origins=[
+
         settings.FRONTEND_URL,
+
         "http://localhost:3000",
+
     ],
+
     allow_credentials=True,
+
     allow_methods=["*"],
+
     allow_headers=["*"],
+
 )
+
 
 app.add_middleware(
     RequestIDMiddleware
@@ -95,10 +148,15 @@ app.include_router(
 async def root():
 
     return {
+
         "success": True,
+
         "service": settings.APP_NAME,
+
         "version": settings.APP_VERSION,
+
         "environment": settings.ENV,
+
     }
 
 
@@ -109,9 +167,17 @@ async def root():
 async def status():
 
     return {
+
         "success": True,
+
         "uptime_seconds": round(
-            time.time() - STARTED_AT,
+
+            time.time()
+            -
+            STARTED_AT,
+
             2,
+
         ),
+
     }

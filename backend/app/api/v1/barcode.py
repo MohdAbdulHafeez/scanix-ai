@@ -1,8 +1,5 @@
 from fastapi import APIRouter
 
-from modules.barcode.schemas import (
-    BarcodeRequest,
-)
 
 from services.external.openfoodfacts import (
     openfoodfacts,
@@ -19,21 +16,29 @@ router = APIRouter(
 )
 
 
-@router.post("")
+@router.get(
+    "/{barcode}"
+)
 async def scan_barcode(
-    body: BarcodeRequest,
+    barcode: str,
 ):
 
     raw = await (
         openfoodfacts.lookup(
-            body.barcode
+            barcode
         )
     )
 
-    if not raw["found"]:
+    if (
+        not raw[
+            "found"
+        ]
+    ):
 
         return raw
 
-    return normalize_product(
-        raw
+    return (
+        normalize_product(
+            raw
+        )
     )
