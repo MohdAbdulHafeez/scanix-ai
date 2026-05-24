@@ -1,15 +1,31 @@
-"""
-SCANIX Root Router
-"""
-
 from fastapi import APIRouter
 
-from app.api.router import api_router
+
+# ROOT ROUTER
+router = APIRouter(
+    prefix="/api/v1"
+)
 
 
-router = APIRouter()
+# IMPORT WORKING ENDPOINTS
+from app.api.v1.barcode import router as barcode_router
+from app.api.v1.nutritionist import router as nutritionist_router
+
+
+# NEW
+from modules.ingredients.router import (
+    router as ingredients_router
+)
+
 
 router.include_router(
-    api_router,
-    prefix="/api/v1",
+    barcode_router
+)
+
+router.include_router(
+    nutritionist_router
+)
+
+router.include_router(
+    ingredients_router
 )

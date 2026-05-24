@@ -1,137 +1,116 @@
-CLAIMS = {
-
-    "No Palm Oil": {
-        "keywords": [
-            "palm",
-            "huile de palme",
-        ],
-        "icon": "🌴",
-    },
-
-    "No Added Sugar": {
-        "keywords": [
-            "sugar",
-            "sucre",
-            "syrup",
-        ],
-        "icon": "🍬",
-    },
-
-    "Dairy Free": {
-        "keywords": [
-            "milk",
-            "lait",
-            "whey",
-            "cheese",
-        ],
-        "icon": "🥛",
-    },
-
-    "Gluten Free": {
-        "keywords": [
-            "wheat",
-            "gluten",
-        ],
-        "icon": "🌾",
-        "invert": True,
-    },
-
-    "No Nuts": {
-        "keywords": [
-            "nut",
-            "hazelnut",
-            "noisette",
-        ],
-        "icon": "🥜",
-    },
-
-}
+from modules.ingredients.rules import RULES
+from modules.ingredients.ingredient_ai import generate_summary
 
 
-def verify_claims(
-    ingredients,
+async def verify_ingredients(
+    ingredients_text: str,
 ):
 
-    text = (
-        " ".join(
+    rows = []
 
-            [
-                x[
-                    "name"
-                ]
+    score = 100
 
-                for x
 
-                in ingredients
-            ]
+    items = [
 
-        )
-    ).lower()
+        x.strip()
 
-    positives = []
+        for x in ingredients_text.split(",")
 
-    negatives = []
+        if x.strip()
 
-    for claim, rule in CLAIMS.items():
+    ]
 
-        found = any(
 
-            k in text
+    for item in items:
 
-            for k
+        matched = None
 
-            in rule[
-                "keywords"
-            ]
 
-        )
+        for key in RULES:
 
-        invert = (
-            rule.get(
-                "invert",
-                False,
-            )
-        )
+            if key in item.lower():
 
-        passed = (
-            not found
-            if not invert
-            else found
-        )
+                matched = RULES[key]
 
-        item = {
+                break
 
-            "claim": claim,
 
-            "icon": (
-                rule[
-                    "icon"
-                ]
-            ),
+        if matched:
 
-            "status": (
-                "PASS"
-                if passed
-                else "FAIL"
-            ),
+            score -= matched["penalty"]
 
-        }
+            rows.append({
 
-        if passed:
+                "name": item,
 
-            positives.append(
-                item
-            )
+                "level": matched["level"],
+
+                "reason": matched["reason"],
+
+            })
 
         else:
 
-            negatives.append(
-                item
-            )
+            rows.append({
+
+                "name": item,
+
+                "level": "safe",
+
+                "reason": "No major concerns.",
+
+            })
+
+
+    score = max(
+        score,
+        0,
+    )
+
+
+    summary = await generate_summary(
+        rows,
+        score,
+    )
+
+
+    verdict = (
+
+        "Excellent"
+
+        if score >= 85
+
+        else
+
+        "Good"
+
+        if score >= 65
+
+        else
+
+        "Consume Occasionally"
+
+    )
+
 
     return {
 
-        "positives": positives,
+        "ingredients": rows,
 
-        "negatives": negatives,
+        "score": score,
+
+        "summary": summary,
+
+        "verdict": verdict,
+
     }
+
+
+
+# compatibility for existing barcode flow
+def verify_claims(
+    claims=None,
+):
+
+    return claims or []

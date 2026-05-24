@@ -8,11 +8,11 @@ router = APIRouter(
 
 
 @router.post("")
-async def verify_ingredients(
+async def verify(
     body: dict,
 ):
 
-    raw = (
+    ingredients = (
         body.get(
             "ingredients",
             ""
@@ -23,14 +23,14 @@ async def verify_ingredients(
 
         x.strip()
 
-        for x in raw.split(",")
+        for x in ingredients.split(",")
 
         if x.strip()
 
     ]
 
-    result = []
 
+    result = []
 
     score = 100
 
@@ -42,9 +42,7 @@ async def verify_ingredients(
 
         risk = "safe"
 
-        explanation = (
-            "No major concerns."
-        )
+        explanation = "Looks okay."
 
 
         if "sugar" in lower:
@@ -52,7 +50,7 @@ async def verify_ingredients(
             risk = "high"
 
             explanation = (
-                "High added sugar may increase blood glucose."
+                "High added sugar."
             )
 
             score -= 25
@@ -63,27 +61,16 @@ async def verify_ingredients(
             risk = "medium"
 
             explanation = (
-                "High saturated fat. Consume moderately."
+                "High saturated fat."
             )
 
             score -= 15
 
 
-        elif "lecithin" in lower:
-
-            risk = "safe"
-
-            explanation = (
-                "Common food stabilizer."
-            )
-
-
         elif "cocoa" in lower:
 
-            risk = "safe"
-
             explanation = (
-                "Natural cocoa ingredient."
+                "Natural ingredient."
             )
 
 
@@ -101,31 +88,6 @@ async def verify_ingredients(
         })
 
 
-    score = max(
-        score,
-        0,
-    )
-
-
-    recommendation = (
-
-        "Excellent ingredient profile"
-
-        if score >= 80
-
-        else
-
-        "Consume occasionally"
-
-        if score >= 60
-
-        else
-
-        "Avoid frequent intake"
-
-    )
-
-
     return {
 
         "success":
@@ -135,9 +97,19 @@ async def verify_ingredients(
         result,
 
         "score":
-        score,
+        max(
+            score,
+            0,
+        ),
 
         "recommendation":
-        recommendation,
+
+        "Excellent"
+
+        if score >= 80
+
+        else
+
+        "Consume occasionally"
 
     }
