@@ -17,6 +17,9 @@ from modules.ingredients.router import (
     router as ingredients_router
 )
 
+from modules.ingredients.ocr_router import (
+router as ocr_router,
+)
 
 router.include_router(
     barcode_router
@@ -28,4 +31,8 @@ router.include_router(
 
 router.include_router(
     ingredients_router
+)
+
+router.include_router(
+ocr_router
 )
