@@ -9,98 +9,58 @@ import Button from "@/shared/components/ui/Button"
 export default function IngredientsPage(){
 
 const [ingredients,setIngredients]=useState("")
+const [image,setImage]=useState<File|null>(null)
 const [loading,setLoading]=useState(false)
 const [result,setResult]=useState<any>(null)
 
-function extractItems(data:any){
+async function uploadImage(){
 
-if(!data) return []
-
-if(Array.isArray(data))
-return data
-
-if(data.ingredients)
-return data.ingredients
-
-if(data.items)
-return data.items
-
-if(data.analysis)
-return data.analysis
-
-if(data.result)
-return extractItems(data.result)
-
-if(data.data)
-return extractItems(data.data)
-
-return []
-
-}
-
-function getScore(data:any){
-
-return (
-data?.score
-||
-data?.overall_score
-||
-data?.result?.score
-||
-data?.data?.score
-||
-0
-)
-
-}
-
-function getVerdict(data:any){
-
-return (
-data?.verdict
-||
-data?.summary
-||
-data?.message
-||
-data?.result?.verdict
-||
-data?.data?.verdict
-||
-"Analysis complete"
-)
-
-}
-
-async function verify(){
+if(!image) return
 
 try{
 
 setLoading(true)
 
-const response=
+const form=
+new FormData()
+
+form.append(
+"image",
+image
+)
+
+const res=
 
 await fetch(
-"http://127.0.0.1:8000/api/v1/ingredients",
+
+"http://127.0.0.1:8000/api/v1/ingredients/image",
+
 {
+
 method:"POST",
 
-headers:{
-"Content-Type":"application/json",
-},
+body:form,
 
-body:JSON.stringify({
-ingredients
-}),
 }
+
 )
 
 const data=
-await response.json()
+await res.json()
 
-console.log(data)
+setIngredients(
 
-setResult(data)
+data.ingredients_text
+
+||
+
+""
+
+)
+
+alert(
+"Ingredients extracted"
+)
 
 }
 
@@ -109,7 +69,7 @@ catch(e){
 console.log(e)
 
 alert(
-"Ingredient verification failed"
+"OCR failed"
 )
 
 }
@@ -122,8 +82,70 @@ setLoading(false)
 
 }
 
-const items=
-extractItems(result)
+
+
+async function verify(){
+
+try{
+
+setLoading(true)
+
+const res=
+
+await fetch(
+
+"http://127.0.0.1:8000/api/v1/ingredients",
+
+{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":
+"application/json",
+
+},
+
+body:
+
+JSON.stringify({
+
+ingredients,
+
+}),
+
+}
+
+)
+
+const data=
+
+await res.json()
+
+setResult(
+data
+)
+
+}
+
+catch{
+
+alert(
+"Verification failed"
+)
+
+}
+
+finally{
+
+setLoading(false)
+
+}
+
+}
+
+
 
 return(
 
@@ -131,13 +153,16 @@ return(
 
 <Navbar/>
 
+
 <main
 
 style={{
 
-minHeight:"100vh",
+minHeight:
+"100vh",
 
-paddingTop:120,
+paddingTop:
+120,
 
 background:
 "radial-gradient(circle at 30% 30%, #0f172a 0%, #020617 80%)",
@@ -152,89 +177,142 @@ background:
 
 style={{
 
-fontSize:72,
+fontSize:
+70,
 
-fontWeight:900,
+fontWeight:
+900,
 
 }}
 
 >
 
-🧪 Ingredient Verifier
+📸 OCR Ingredient Verifier
 
 </h1>
 
 
-<p
+<br/>
 
-style={{
 
-opacity:.8,
+<input
 
-marginBottom:30,
+type="file"
 
-}}
+accept="image/*"
+
+onChange={
+
+e=>
+
+setImage(
+
+e.target.files?.[0]
+
+||
+
+null
+
+)
+
+}
+
+/>
+
+
+<br/>
+<br/>
+
+
+<Button
+
+onClick={
+uploadImage
+}
 
 >
 
-Paste ingredients and evaluate them instantly
+{
 
-</p>
+loading
+
+?
+
+"Extracting..."
+
+:
+
+"Upload & Extract"
+
+}
+
+</Button>
+
+
+<br/>
+<br/>
 
 
 <textarea
 
-value={ingredients}
+value={
+ingredients
+}
 
 onChange={
+
 e=>
+
 setIngredients(
 e.target.value
 )
+
 }
 
 style={{
 
-width:"100%",
+width:
+"100%",
 
-height:240,
+height:
+250,
 
-padding:24,
+padding:
+24,
 
-background:"#071327",
+background:
+"#071327",
 
-borderRadius:28,
+color:
+"white",
 
-color:"white",
-
-fontSize:20,
+borderRadius:
+24,
 
 }}
-
-placeholder=
-"Sugar, Palm Oil, Cocoa Powder"
 
 >
 
 
 </textarea>
 
+
 <br/>
 <br/>
+
 
 <Button
-onClick={verify}
->
 
-{
-loading
-?
-"Analyzing..."
-:
-"Verify Ingredients"
+onClick={
+verify
 }
 
+>
+
+Verify Ingredients
+
 </Button>
+
 
 
 {
@@ -247,13 +325,17 @@ result
 
 style={{
 
-marginTop:50,
+marginTop:
+40,
 
-padding:30,
+padding:
+30,
 
-background:"#071327",
+background:
+"#071327",
 
-borderRadius:30,
+borderRadius:
+24,
 
 }}
 
@@ -261,7 +343,7 @@ borderRadius:30,
 
 <h2>
 
-🧠 Ingredient Intelligence
+🧠 Result
 
 </h2>
 
@@ -269,107 +351,93 @@ borderRadius:30,
 <br/>
 
 
-{
+<div>
 
-items.map(
-
-(item:any,index:number)=>(
-
-<div
-
-key={index}
-
-style={{
-
-padding:24,
-
-marginBottom:20,
-
-background:"#08192f",
-
-borderRadius:22,
-
-}}
-
->
-
-<h2>
+Score:
 
 {
-
-item.name
-
-||
-
-item.ingredient
-
-||
-
-`Ingredient ${index+1}`
-
-}
-
-</h2>
-
-
-<div
-
-style={{
-
-fontWeight:700,
-
-fontSize:22,
-
-marginTop:10,
-
-color:
-
-(item.level==="safe")
-
-?
-
-"#00ff88"
-
-:
-
-(item.level==="medium")
-
-?
-
-"#ffbf00"
-
-:
-
-"#ff5555"
-
-}}
-
->
-
-{
-item.level
+result.score
 }
 
 </div>
 
 
-<p
+<br/>
+
+
+<div>
+
+{
+result.summary
+}
+
+</div>
+
+
+<br/>
+
+
+{
+
+result.ingredients
+
+?.map(
+
+(
+
+x:any,
+
+i:number
+
+)=>(
+
+<div
+
+key={i}
 
 style={{
 
-marginTop:16,
+padding:
+20,
 
-fontSize:18,
+marginTop:
+16,
+
+background:
+"#08192f",
+
+borderRadius:
+18,
 
 }}
 
 >
 
+<h3>
+
 {
-item.reason
+x.name
 }
 
-</p>
+</h3>
+
+
+<div>
+
+{
+x.level
+}
+
+</div>
+
+
+<div>
+
+{
+x.reason
+}
+
+</div>
 
 </div>
 
@@ -377,41 +445,8 @@ item.reason
 
 )
 
-
-
 }
 
-
-<h1>
-
-Overall Score:
-
-{
-getScore(result)
-}
-
-/100
-
-</h1>
-
-
-<p
-
-style={{
-
-marginTop:20,
-
-fontSize:22,
-
-}}
-
->
-
-{
-getVerdict(result)
-}
-
-</p>
 
 </div>
 
